@@ -1,9 +1,10 @@
 package equilinoxmodkit.loader;
 
-
 import equilinoxmodkit.util.EmkLogger;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
+import java.net.URLClassLoader;
 
 
 /* Main class of the Equilinox Mod Loader. */
@@ -18,8 +19,7 @@ class EmlLauncher {
 		ModLoader.loadMods();
 		ModLoader.sortMods();
 		ModLoader.preInitializeMods();
-		
-		
+
 		EmlLauncher.launchEquilinox();
 	}
 	
@@ -33,7 +33,10 @@ class EmlLauncher {
 	
 	
 	private static void launchEquilinox() {
+		URLClassLoader loader = LaunchHelper.getLoader();
+
 		EmkLogger.log( "Launching Equilinox" );
+		/*
 		try {
 			Process process = new ProcessBuilder(
 					new String[] {
@@ -50,9 +53,16 @@ class EmlLauncher {
 			EmlLauncher.stop( exitCode );
 		} catch( IOException | InterruptedException e ) {
 			e.printStackTrace();
+		}*/
+		try {
+			Class mainClass = loader.loadClass("main.MainApp");
+			Method method = mainClass.getDeclaredMethod("main", String[].class);
+
+			method.invoke(mainClass, new Object[] {new String[] {}});
+		} catch (Exception e) {
+			System.err.println(e.getMessage());
 		}
+
 		EmkLogger.log( "Stopped Equilinox" );
 	}
-	
-	
 }

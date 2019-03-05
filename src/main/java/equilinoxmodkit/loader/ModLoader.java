@@ -1,10 +1,10 @@
 package equilinoxmodkit.loader;
 
-
 import equilinoxmodkit.event.EmkEvent;
 import equilinoxmodkit.mod.*;
 import equilinoxmodkit.util.EmkLogger;
 import equilinoxmodkit.util.ExtendedLogger;
+import io.github.wordandahalf.blueprint.Blueprints;
 
 import java.io.File;
 import java.io.IOException;
@@ -58,10 +58,10 @@ public class ModLoader {
 	static void loadMods() {
 		EmkLogger.log( "Loading mods from 'mods' folder" );
 		try {
-			URLClassLoader sysloader = (URLClassLoader) ClassLoader.getSystemClassLoader();
+			URLClassLoader sysloader = LaunchHelper.getLoader();
 			Method sysloader_addURL = URLClassLoader.class.getDeclaredMethod( "addURL",URL.class );
 			sysloader_addURL.setAccessible( true );
-			
+
 			JarFile jarFile;
 			String className;
 			Class<?> clazz;
@@ -75,7 +75,7 @@ public class ModLoader {
 					for( JarEntry entry : Collections.list( jarFile.entries() ) ) {
 						if(entry.getName().endsWith( ".class" )) {
 							className = entry.getName().replace( ".class","" ).replace( "/","." );
-							clazz = Class.forName( className );
+							clazz = sysloader.loadClass(className);
 							if(clazz.getSuperclass().equals( EquilinoxMod.class )) {
 								ExtendedLogger.log( " - loading " + className );
 								mod = ModLoader.createInstance( clazz );
@@ -171,8 +171,14 @@ public class ModLoader {
 	}
 	
 	private static void handleBlueprintClasses( ArrayList<Class<?>> classes ) {
-	
+        for(Class<?> blueprint : classes)
+            Blueprints.add(blueprint);
+
+        Blueprints.useClassLoader(LaunchHelper.getLoader());
+        try {
+            Blueprints.apply();
+        } catch (Exception e) {
+            System.err.println(e.getCause().getClass().getSimpleName() + ": " + e.getMessage());
+        }
 	}
-	
-	
 }

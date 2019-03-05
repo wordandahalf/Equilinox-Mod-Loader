@@ -5,6 +5,10 @@ import equilinoxmodkit.util.*;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
@@ -35,8 +39,10 @@ public class LaunchHelper {
 			"liblwjgl.dylib",
 			"openal.dylib"
 	};
-	
-	
+
+	private static URLClassLoader loader;
+	public static URLClassLoader getLoader() { return loader; }
+
 	private static boolean emlDebugModeEnabled;
 	private static boolean equilinoxDebugModeEnabled;
 	
@@ -119,8 +125,15 @@ public class LaunchHelper {
 		boolean ntvDirManCgd = nativesDir != null;
 		boolean mdsDirManCgd = modsDir != null;
 		operatingSystem = LaunchHelper.determineOperatingSystem();
-		
-		final String THIS_FOLDER_PATHNAME = LaunchHelper.class.getProtectionDomain().getCodeSource().getLocation().getFile();
+
+		File currentFile = null;
+		try {
+			currentFile = new File(LaunchHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+		} catch(URISyntaxException e) {
+			System.err.println(e.getMessage());
+		}
+
+		final String THIS_FOLDER_PATHNAME = currentFile.getParent();
 		switch( operatingSystem ) {
 			case WINDOWS:
 				if(equilinoxDir == null) equilinoxDir = LaunchHelper.determineEquilinoxDirectory( THIS_FOLDER_PATHNAME );
@@ -164,7 +177,7 @@ public class LaunchHelper {
 				if(logFile == null) logFile = new File( equilinoxDir.getPath() + "/emk.log" );
 				if(nativesDir == null) nativesDir = new File( equilinoxDir.getPath() );
 				LaunchHelper.loopThroughNatives( NATIVE_NAMES_MACOS );
-				if(modsDir == null) modsDir = new File( equilinoxDir.getPath() + "/mods" );
+				if(modsDir == null) modsDir = new File( equilinoxDir, "mods");
 				javaFile = new File( equilinoxDir.getPath() + "/PlugIns/OracleJdkMac.jdk/Contents/Home/bin/java" );
 				break;
 		}
@@ -174,6 +187,14 @@ public class LaunchHelper {
 		if(!logFleManCgd) ExtendedLogger.log( "Log file set to '",logFile,"'" );
 		if(!ntvDirManCgd) ExtendedLogger.log( "Natives directory set to '",nativesDir,"'" );
 		if(!mdsDirManCgd) ExtendedLogger.log( "Mods directory set to '",modsDir,"'" );
+
+		try {
+			loader = new URLClassLoader(
+					new URL[]{ equilinoxJar.toURI().toURL() }
+			);
+		} catch (MalformedURLException e) {
+			System.err.println(e.getMessage());
+		}
 	}
 	
 	
