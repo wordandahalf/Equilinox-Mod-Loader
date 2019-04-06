@@ -171,10 +171,10 @@ public class ModLoader {
 	}
 	
 	private static void handleBlueprintClasses( ArrayList<Class<?>> classes ) {
+		Blueprints.useClassLoader(LaunchHelper.getLoader());
+
         for(Class<?> blueprint : classes)
             Blueprints.add(blueprint);
-
-        Blueprints.useClassLoader(LaunchHelper.getLoader());
         try {
             Blueprints.apply();
         } catch (Exception e) {
